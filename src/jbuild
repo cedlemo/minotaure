@@ -1,0 +1,14 @@
+(jbuild_version 1)
+
+(executable
+ ((name minotaure)
+  (public_name minotaure)
+  (libraries (async
+    core
+    minotaure_plugin
+    sexplib
+    cmdliner notty notty.unix unix logs fmt logs.fmt ocaml_plugin))
+  (modules (minotaure))
+  (preprocess (pps (ppx_jane ppx_driver.runner)))
+  )
+)
