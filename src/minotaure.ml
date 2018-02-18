@@ -3,11 +3,13 @@ open Notty_unix
 
 open Async
 
+let builddir = Filename.concat (Core.Sys.getcwd()) "_build"
+
 module Plugin = Ocaml_plugin.Dynloader.Make(struct
-    type t = (module Minotaure_plugin.Plugin_intf.S)
-    let t_repr = "Minotaure_plugin.Plugin_intf.S"
-    let univ_constr = Minotaure_plugin.Plugin_intf.univ_constr
-    let univ_constr_repr = "Minotaure_plugin.Plugin_intf.univ_constr"
+    type t = (module Ocaml_plugin_minotaure.Plugin_intf.S)
+    let t_repr = "Ocaml_plugin_minotaure.Plugin_intf.S"
+    let univ_constr = Ocaml_plugin_minotaure.Plugin_intf.univ_constr
+    let univ_constr_repr = "Ocaml_plugin_minotaure.Plugin_intf.univ_constr"
   end)
 
 let grid xxs = xxs |> List.map I.hcat |> I.vcat
@@ -38,22 +40,28 @@ let rec main t message (x, y as pos) =
 let () =
   don't_wait_for (
     Ocaml_plugin.Private.Shell.set_defaults ~verbose:true ~echo:true ();
-    Ocaml_plugin.Compiler.create () >>= function
-    | Error e ->
-      Core.Printf.eprintf "Cannot build embed loader: %s" (Core.Error.to_string_hum e);
-      Core.Printf.eprintf "use run_standalone.exe (cf build.sh) instead\n%!";
-      exit 1
-    | Ok (`this_needs_manual_cleaning_after compiler) ->
-      let loader = Ocaml_plugin.Compiler.loader compiler in
-      let files = ["/home/cedlemo/Project/OCaml/minotaure/data/interface.ml"] in
-      Plugin.load_ocaml_src_files loader files >>= function
+    Sys.getcwd () >>= fun cwd ->
+    let in_dir = Filename.concat cwd "tmp_dir" in
+    let ocamlopt_opt = "ocamlopt.opt" in
+    let include_directories =
+    (* Those directories must point to the lib dir where lies the ocaml_plugin_minotaure.cmi
+     * and the lib dir where is the ocaml_plugin.cmi *)
+    [ "."; "../lib"; "/home/cedlemo/Projets/OCaml/minotaure/src" ;
+    "/home/cedlemo/Projets/OCaml/minotaure/lib" ;
+    "/home/cedlemo/.opam/4.06.0/lib/ocaml_plugin/"] in
+    let files = ["/home/cedlemo/Projets/OCaml/minotaure/data/interface.ml"] in
+    Ocaml_plugin.Dynloader.create ~in_dir ~include_directories ~ocamlopt_opt () >>= function
+    | Error err -> Core.Printf.eprintf "loading failed:\n%s\n%!" (Core.Error.to_string_hum err);
+        exit 1
+    | Ok loader -> Plugin.load_ocaml_src_files loader files >>= function
       | Error err ->
         Core.Printf.eprintf "loading failed:\n%s\n%!" (Core.Error.to_string_hum err);
         exit 1
       | Ok plugin ->
-        let module M = (val plugin : Minotaure_plugin.Plugin_intf.S) in
+        let module M = (val plugin : Ocaml_plugin_minotaure.Plugin_intf.S) in
         let t = Term.create () in
         main t M.message (Term.size t)
+
 )
 
 let () = Core.never_returns (Scheduler.go ())

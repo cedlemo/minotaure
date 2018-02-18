@@ -1,5 +1,5 @@
 (library
- ((name minotaure_plugin)
+ ((name ocaml_plugin_minotaure)
   (flags (:standard -safe-string))
   (libraries (core ocaml_plugin sexplib))
   (preprocess (pps (ppx_jane ppx_driver.runner)))))
