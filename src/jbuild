@@ -5,10 +5,9 @@
   (public_name minotaure)
   (libraries (async
     core
-    ocaml_plugin_minotaure
     sexplib
     cmdliner notty notty.unix unix logs fmt logs.fmt ocaml_plugin))
-  (modules (minotaure))
+  (modules (minotaure ocaml_plugin_minotaure))
   (preprocess (pps (ppx_jane ppx_driver.runner)))
   )
 )
