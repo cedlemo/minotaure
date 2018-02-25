@@ -6,10 +6,10 @@ open Async
 let builddir = Filename.concat (Core.Sys.getcwd()) "_build"
 
 module Plugin = Ocaml_plugin.Dynloader.Make(struct
-    type t = (module Ocaml_plugin_minotaure.S)
-    let t_repr = "Ocaml_plugin_minotaure.S"
-    let univ_constr = Ocaml_plugin_minotaure.univ_constr
-    let univ_constr_repr = "Ocaml_plugin_minotaure.univ_constr"
+    type t = (module Interface_plugin.S)
+    let t_repr = "Interface_plugin.S"
+    let univ_constr = Interface_plugin.univ_constr
+    let univ_constr_repr = "Interface_plugin.univ_constr"
   end)
 
 let grid xxs = xxs |> List.map I.hcat |> I.vcat
@@ -58,7 +58,7 @@ let () =
         Core.Printf.eprintf "loading failed:\n%s\n%!" (Core.Error.to_string_hum err);
         exit 1
       | Ok plugin ->
-        let module M = (val plugin : Ocaml_plugin_minotaure.S) in
+        let module M = (val plugin : Interface_plugin.S) in
         let t = Term.create () in
         main t M.message (Term.size t)
 

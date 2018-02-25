@@ -7,7 +7,7 @@
     core
     sexplib
     cmdliner notty notty.unix unix logs fmt logs.fmt ocaml_plugin))
-  (modules (minotaure ocaml_plugin_minotaure))
+  (modules (minotaure interface_plugin))
   (preprocess (pps (ppx_jane ppx_driver.runner)))
   )
 )
