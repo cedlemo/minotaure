@@ -3,11 +3,6 @@
 (executable
  ((name minotaure)
   (public_name minotaure)
-  (libraries (async
-    core
-    sexplib
-    cmdliner notty notty.unix unix logs fmt logs.fmt ocaml_plugin))
-  (modules (minotaure interface_plugin))
-  (preprocess (pps (ppx_jane ppx_driver.runner)))
+  (libraries (cmdliner notty notty.lwt)
   )
 )

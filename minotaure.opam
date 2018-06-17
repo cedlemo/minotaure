@@ -15,9 +15,4 @@ depends: [
   "cmdliner"
   "notty"
   "logs"
-  "ocaml_plugin"
-  "core"
-  "sexplib"
-  "ppx_driver"
-  "ppx_jane"
 ]
