@@ -8,6 +8,7 @@ open Lwt
 module LwtTerm = Notty_lwt.Term
 
 let grid xxs = xxs |> List.map I.hcat |> I.vcat
+let counter = ref 0
 
 let outline attr t =
   let (w, h) = LwtTerm.size t in
@@ -19,28 +20,31 @@ let outline attr t =
 
 let size_box cols rows =
   let cols_str = string_of_int cols in let rows_str = string_of_int rows in
-  let label = (cols_str ^ "x" ^ rows_str) in
+  let label = String.concat " " [cols_str; "x" ; rows_str; string_of_int !counter] in
   let box = I.string A.(fg lightgreen ++ bg lightblack) label in
   let top_margin = (rows - I.height box) / 2 in
   let left_margin = (cols - I.width box) / 2 in
   I.pad ~t:top_margin ~l:left_margin box
 
-let rec main t (x, y as pos) =
-  let img = I.((outline A.(fg lightred ) t) </> (size_box x y)) in
-  LwtTerm.image t img
+let timer () = Lwt_unix.sleep 1.0 >|= fun () -> `Timer
+let event term = Lwt_stream.get (Term.events term) >|= function
+  | Some (`Resize _ | #Unescape.event as x) -> x
+  | None -> `End
+
+let rec main term (e, t) (x, y as pos) =
+  let img = I.((outline A.(fg lightred ) term) </> (size_box x y)) in
+  LwtTerm.image term img
   >>= fun () ->
-    LwtTerm.cursor t (Some pos)
+    LwtTerm.cursor term (Some pos)
     >>= fun () ->
-      Lwt_stream.get ( LwtTerm.events t)
-      >>= fun event ->
-      match event with
-      | None -> LwtTerm.release t >>= fun () -> Lwt.return_unit
-      | Some (`Resize _ | #Unescape.event as x) -> match x with
-        | `Key (`Escape, []) | `Key (`ASCII 'C', [`Ctrl]) -> LwtTerm.release t >>= fun () -> Lwt.return_unit
-        | `Resize (cols, rows) -> main t (cols, rows)
-        | _ ->Lwt.return () >>= fun () -> main t pos
+      (e<?>t) >>= function
+        | `Key (`Escape, []) | `Key (`ASCII 'C', [`Ctrl]) -> LwtTerm.release term >>= fun () -> Lwt.return_unit
+        | `Resize (cols, rows) -> main term (e,t) (cols, rows)
+        | `Timer -> let () = counter := !counter + 1 in
+            main term (e,timer()) (x, y)
+        | _ ->Lwt.return () >>= fun () -> main term (e,t) pos
 
 let () =
-  let t = LwtTerm.create () in
-  let size = LwtTerm.size t in
-  Lwt_main.run @@ main t size
+  let term = LwtTerm.create () in
+  let size = LwtTerm.size term in
+  Lwt_main.run @@ main term (event term, timer ()) size
