@@ -1,0 +1,8 @@
+(jbuild_version 1)
+
+(library
+ ((name        minotaure_lib)
+  (libraries (str lwt lwt.unix))
+ )
+)
+
