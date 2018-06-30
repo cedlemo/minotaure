@@ -1,0 +1,11 @@
+(jbuild_version 1)
+
+(executables
+ ((names (tests))
+  (libraries   (minotaure_lib lwt lwt.unix oUnit))
+))
+
+(alias
+ ((name    runtest)
+  (deps    (tests.exe))
+  (action  (run ${<}))))
