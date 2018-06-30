@@ -5,5 +5,6 @@ let () =
     ("Minotaure test suite" >:::
      [
        Test_utils.run;
+       Test_cpuinfo.run;
      ]
     )
