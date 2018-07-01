@@ -1,15 +1,16 @@
 open OUnit2
 open Lwt.Infix
 open Minotaure_lib
+open System_info
 
 let cpu_reference = "cpu 70218 850 19676 1415000 43324 9357 2362 0 0 0"
 let core0_reference = "cpu0 70218 850 19676 1415000 43324 9357 2362 0 0 0"
 
 let printer = fun x -> x
 
-let test_cpuinfo_line_to_cpuinfo test_ctxt =
+let test_cpu_line_to_cpuinfo test_ctxt =
   let msg = "This should not have been reached" in
-  match System_info.line_to_cpuinfo cpu_reference with
+  match Cpu.line_to_cpuinfo cpu_reference with
   | None -> assert_equal ~msg false true
   | Some cpuinfo' ->
     let () = assert_equal ~printer "70218" cpuinfo'.user in
@@ -23,9 +24,9 @@ let test_cpuinfo_line_to_cpuinfo test_ctxt =
     let () = assert_equal ~printer "0" cpuinfo'.guest in
     assert_equal ~printer "0" cpuinfo'.guest_nice
 
-let test_cpuinfo_line_to_coreinfo test_ctxt =
+let test_cpu_line_to_coreinfo test_ctxt =
   let msg = "This should not have been reached test_cpuinfo_line_to_coreinfo" in
-  match System_info.line_to_coreinfo core0_reference with
+  match Cpu.line_to_coreinfo core0_reference with
   | None -> assert_equal ~msg false true
   | Some coreinfo' ->
     let () = assert_equal ~printer "0" coreinfo'.number in
@@ -40,11 +41,11 @@ let test_cpuinfo_line_to_coreinfo test_ctxt =
     let () = assert_equal ~printer "0" coreinfo'.guest in
     assert_equal ~printer "0" coreinfo'.guest_nice
 
-let test_cpuinfo_parse_stat_file test_ctxt =
+let test_cpu_parse_stat_file test_ctxt =
   ignore(
     Lwt_main.run begin
   let stat_file = "../../../tests/data/proc_stat" in
-  System_info.parse_stat_file stat_file
+  Cpu.parse_stat_file stat_file
   >>= fun cpuinfo ->
     match cpuinfo.main with
     | None -> let msg = "No info for main cpu" in
@@ -80,7 +81,7 @@ let test_cpuinfo_parse_stat_file test_ctxt =
 let run =
   "Minotaure_lib Cpu_info tests" >:::
   [
-    "test cpuinfo line_to_cpuinfo" >:: test_cpuinfo_line_to_cpuinfo;
-    "test coreinfo line_to_coreinfo" >:: test_cpuinfo_line_to_coreinfo;
-    "test cpuinfo parse stat file" >:: test_cpuinfo_parse_stat_file;
+    "test Cpu line_to_cpuinfo" >:: test_cpu_line_to_cpuinfo;
+    "test Cpu line_to_coreinfo" >:: test_cpu_line_to_coreinfo;
+    "test Cpu parse stat file" >:: test_cpu_parse_stat_file;
   ]
