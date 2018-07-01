@@ -1,5 +1,9 @@
+open Lwt.Infix
+
 (* https://stackoverflow.com/questions/23367857/accurate-calculation-of-cpu-usage-given-in-percentage-in-linux *)
-type cpuinfo = {
+type empty = Empty
+
+type cpuinfo =  {
   user : string;
   nice : string;
   system : string;
@@ -25,9 +29,10 @@ type coreinfo = {
   guest : string;
   guest_nice : string;
 }
+
 let line_to_cpuinfo line =
   let pattern =
-    "^cpu \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\)"  in
+    "^cpu +\\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\)"  in
   let reg = Str.regexp pattern in
   match Str.string_match reg line 0 with
   | false -> None
@@ -65,3 +70,26 @@ let line_to_coreinfo line =
       guest = Str.matched_group 10 line;
       guest_nice = Str.matched_group 11 line;
     }
+
+type cpu = {
+  main : cpuinfo option;
+  cores : coreinfo list;
+}
+
+let parse_stat_file filename =
+  Utils.read_lines filename
+  >>= fun lines ->
+  let rec fetch_data cpu = function
+    | [] -> Lwt.return cpu
+    | line :: rest ->
+      match line_to_cpuinfo line with
+      | Some cpuinfo ->
+        fetch_data {cpu with main = Some cpuinfo} rest
+      | None ->
+        match line_to_coreinfo line with
+        | Some coreinfo ->
+          fetch_data {cpu with cores = (coreinfo :: cpu.cores)} rest
+        | None ->
+          fetch_data cpu rest
+  in
+  fetch_data {main=None; cores = []} lines
