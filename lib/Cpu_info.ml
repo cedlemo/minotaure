@@ -12,14 +12,48 @@ type cpuinfo = {
   guest_nice : string;
 }
 
+type coreinfo = {
+  number : string;
+  user : string;
+  nice : string;
+  system : string;
+  idle : string;
+  iowait : string;
+  irq : string;
+  softirq : string;
+  steal : string;
+  guest : string;
+  guest_nice : string;
+}
 let line_to_cpuinfo line =
   let pattern =
-    "^\\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\)"  in
+    "^cpu \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\)"  in
   let reg = Str.regexp pattern in
   match Str.string_match reg line 0 with
   | false -> None
   | true ->
     Some {
+      user = Str.matched_group 1 line;
+      nice = Str.matched_group 2 line;
+      system = Str.matched_group 3 line;
+      idle = Str.matched_group 4 line;
+      iowait = Str.matched_group 5 line;
+      irq = Str.matched_group 6 line;
+      softirq = Str.matched_group 7 line;
+      steal = Str.matched_group 8 line;
+      guest = Str.matched_group 9 line;
+      guest_nice = Str.matched_group 10 line;
+    }
+
+let line_to_coreinfo line =
+  let pattern =
+    "^cpu\\([0-9]+\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\)"  in
+  let reg = Str.regexp pattern in
+  match Str.string_match reg line 0 with
+  | false -> None
+  | true ->
+    Some {
+      number = Str.matched_group 1 line;
       user = Str.matched_group 2 line;
       nice = Str.matched_group 3 line;
       system = Str.matched_group 4 line;
