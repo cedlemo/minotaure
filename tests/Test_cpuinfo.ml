@@ -9,7 +9,7 @@ let printer = fun x -> x
 
 let test_cpuinfo_line_to_cpuinfo test_ctxt =
   let msg = "This should not have been reached" in
-  match Cpu_info.line_to_cpuinfo cpu_reference with
+  match System_info.line_to_cpuinfo cpu_reference with
   | None -> assert_equal ~msg false true
   | Some cpuinfo' ->
     let () = assert_equal ~printer "70218" cpuinfo'.user in
@@ -25,7 +25,7 @@ let test_cpuinfo_line_to_cpuinfo test_ctxt =
 
 let test_cpuinfo_line_to_coreinfo test_ctxt =
   let msg = "This should not have been reached test_cpuinfo_line_to_coreinfo" in
-  match Cpu_info.line_to_coreinfo core0_reference with
+  match System_info.line_to_coreinfo core0_reference with
   | None -> assert_equal ~msg false true
   | Some coreinfo' ->
     let () = assert_equal ~printer "0" coreinfo'.number in
@@ -44,7 +44,7 @@ let test_cpuinfo_parse_stat_file test_ctxt =
   ignore(
     Lwt_main.run begin
   let stat_file = "../../../tests/data/proc_stat" in
-  Cpu_info.parse_stat_file stat_file
+  System_info.parse_stat_file stat_file
   >>= fun cpuinfo ->
     match cpuinfo.main with
     | None -> let msg = "No info for main cpu" in
