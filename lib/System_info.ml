@@ -4,30 +4,30 @@ open Lwt.Infix
 
 module Cpu = struct
   type cpuinfo =  {
-    user : string;
-    nice : string;
-    system : string;
-    idle : string;
-    iowait : string;
-    irq : string;
-    softirq : string;
-    steal : string;
-    guest : string;
-    guest_nice : string;
+    user : int;
+    nice : int;
+    system : int;
+    idle : int;
+    iowait : int;
+    irq : int;
+    softirq : int;
+    steal : int;
+    guest : int;
+    guest_nice : int;
   }
 
   type coreinfo = {
-    number : string;
-    user : string;
-    nice : string;
-    system : string;
-    idle : string;
-    iowait : string;
-    irq : string;
-    softirq : string;
-    steal : string;
-    guest : string;
-    guest_nice : string;
+    number : int;
+    user : int;
+    nice : int;
+    system : int;
+    idle : int;
+    iowait : int;
+    irq : int;
+    softirq : int;
+    steal : int;
+    guest : int;
+    guest_nice : int;
   }
 
   let line_to_cpuinfo line =
@@ -38,16 +38,16 @@ module Cpu = struct
     | false -> None
     | true ->
       Some {
-        user = Str.matched_group 1 line;
-        nice = Str.matched_group 2 line;
-        system = Str.matched_group 3 line;
-        idle = Str.matched_group 4 line;
-        iowait = Str.matched_group 5 line;
-        irq = Str.matched_group 6 line;
-        softirq = Str.matched_group 7 line;
-        steal = Str.matched_group 8 line;
-        guest = Str.matched_group 9 line;
-        guest_nice = Str.matched_group 10 line;
+        user = Str.matched_group 1 line |> int_of_string;
+        nice = Str.matched_group 2 line |> int_of_string;
+        system = Str.matched_group 3 line |> int_of_string;
+        idle = Str.matched_group 4 line |> int_of_string;
+        iowait = Str.matched_group 5 line |> int_of_string;
+        irq = Str.matched_group 6 line |> int_of_string;
+        softirq = Str.matched_group 7 line |> int_of_string;
+        steal = Str.matched_group 8 line |> int_of_string;
+        guest = Str.matched_group 9 line |> int_of_string;
+        guest_nice = Str.matched_group 10 line |> int_of_string;
       }
 
   let line_to_coreinfo line =
@@ -58,17 +58,17 @@ module Cpu = struct
     | false -> None
     | true ->
       Some {
-        number = Str.matched_group 1 line;
-        user = Str.matched_group 2 line;
-        nice = Str.matched_group 3 line;
-        system = Str.matched_group 4 line;
-        idle = Str.matched_group 5 line;
-        iowait = Str.matched_group 6 line;
-        irq = Str.matched_group 7 line;
-        softirq = Str.matched_group 8 line;
-        steal = Str.matched_group 9 line;
-        guest = Str.matched_group 10 line;
-        guest_nice = Str.matched_group 11 line;
+        number = Str.matched_group 1 line |> int_of_string;
+        user = Str.matched_group 2 line |> int_of_string;
+        nice = Str.matched_group 3 line |> int_of_string;
+        system = Str.matched_group 4 line |> int_of_string;
+        idle = Str.matched_group 5 line |> int_of_string;
+        iowait = Str.matched_group 6 line |> int_of_string;
+        irq = Str.matched_group 7 line |> int_of_string;
+        softirq = Str.matched_group 8 line |> int_of_string;
+        steal = Str.matched_group 9 line |> int_of_string;
+        guest = Str.matched_group 10 line |> int_of_string;
+        guest_nice = Str.matched_group 11 line |> int_of_string;
       }
 
   type t = {
@@ -93,4 +93,6 @@ module Cpu = struct
             fetch_data cpu rest
     in
     fetch_data {main=None; cores = []} lines
+
+
 end
