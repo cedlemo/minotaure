@@ -18,16 +18,7 @@ module Cpu = struct
 
   type coreinfo = {
     number : int;
-    user : int;
-    nice : int;
-    system : int;
-    idle : int;
-    iowait : int;
-    irq : int;
-    softirq : int;
-    steal : int;
-    guest : int;
-    guest_nice : int;
+    info : cpuinfo;
   }
 
   let line_to_cpuinfo line =
@@ -57,8 +48,7 @@ module Cpu = struct
     match Str.string_match reg line 0 with
     | false -> None
     | true ->
-      Some {
-        number = Str.matched_group 1 line |> int_of_string;
+      let core = {
         user = Str.matched_group 2 line |> int_of_string;
         nice = Str.matched_group 3 line |> int_of_string;
         system = Str.matched_group 4 line |> int_of_string;
@@ -69,6 +59,10 @@ module Cpu = struct
         steal = Str.matched_group 9 line |> int_of_string;
         guest = Str.matched_group 10 line |> int_of_string;
         guest_nice = Str.matched_group 11 line |> int_of_string;
+      } in
+      Some {
+        number = Str.matched_group 1 line |> int_of_string;
+        info = core;
       }
 
   type t = {
