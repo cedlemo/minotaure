@@ -30,16 +30,17 @@ let test_cpu_line_to_coreinfo test_ctxt =
   | None -> assert_equal ~msg false true
   | Some coreinfo' ->
     let () = assert_equal ~printer 0 coreinfo'.number in
-    let () = assert_equal ~printer 70218 coreinfo'.user in
-    let () = assert_equal ~printer 850 coreinfo'.nice in
-    let () = assert_equal ~printer 19676 coreinfo'.system in
-    let () = assert_equal ~printer 1415000 coreinfo'.idle in
-    let () = assert_equal ~printer 43324 coreinfo'.iowait in
-    let () = assert_equal ~printer 9357 coreinfo'.irq in
-    let () = assert_equal ~printer 2362 coreinfo'.softirq in
-    let () = assert_equal ~printer 0 coreinfo'.steal in
-    let () = assert_equal ~printer 0 coreinfo'.guest in
-    assert_equal ~printer 0 coreinfo'.guest_nice
+    let core = coreinfo'.info in
+    let () = assert_equal ~printer 70218 core.user in
+    let () = assert_equal ~printer 850 core.nice in
+    let () = assert_equal ~printer 19676 core.system in
+    let () = assert_equal ~printer 1415000 core.idle in
+    let () = assert_equal ~printer 43324 core.iowait in
+    let () = assert_equal ~printer 9357 core.irq in
+    let () = assert_equal ~printer 2362 core.softirq in
+    let () = assert_equal ~printer 0 core.steal in
+    let () = assert_equal ~printer 0 core.guest in
+    assert_equal ~printer 0 core.guest_nice
 
 let test_cpu_parse_stat_file test_ctxt =
   ignore(
@@ -64,16 +65,17 @@ let test_cpu_parse_stat_file test_ctxt =
       let () = assert_equal ~printer:string_of_int 2 (List.length cpuinfo.cores) in
       let core0 = List.nth cpuinfo.cores 1 in
       let () = assert_equal ~printer 0 core0.number in
-      let () = assert_equal ~printer 79701 core0.user in
-      let () = assert_equal ~printer 186 core0.nice in
-      let () = assert_equal ~printer 20803 core0.system in
-      let () = assert_equal ~printer 1432318 core0.idle in
-      let () = assert_equal ~printer 56172 core0.iowait in
-      let () = assert_equal ~printer 7864 core0.irq in
-      let () = assert_equal ~printer 3487 core0.softirq in
-      let () = assert_equal ~printer 0 core0.steal in
-      let () = assert_equal ~printer 0 core0.guest in
-      let () = assert_equal ~printer 0 core0.guest_nice in
+      let core0_info = core0.info in
+      let () = assert_equal ~printer 79701 core0_info.user in
+      let () = assert_equal ~printer 186 core0_info.nice in
+      let () = assert_equal ~printer 20803 core0_info.system in
+      let () = assert_equal ~printer 1432318 core0_info.idle in
+      let () = assert_equal ~printer 56172 core0_info.iowait in
+      let () = assert_equal ~printer 7864 core0_info.irq in
+      let () = assert_equal ~printer 3487 core0_info.softirq in
+      let () = assert_equal ~printer 0 core0_info.steal in
+      let () = assert_equal ~printer 0 core0_info.guest in
+      let () = assert_equal ~printer 0 core0_info.guest_nice in
       Lwt.return_unit
     end
   )
