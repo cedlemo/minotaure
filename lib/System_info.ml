@@ -63,6 +63,9 @@ module Cpu = struct
     | None -> Lwt.return_error "No Cpu information found"
     | Some main -> Lwt.return_ok {main; cores}
 
+let parse_stat_file () =
+  parse_cpuinfo_file "/proc/stat"
+
   (* let usage cpu =
       PrevIdle = previdle + previowait
       Idle = idle + iowait
