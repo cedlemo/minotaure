@@ -16,39 +16,19 @@ module Cpu = struct
     guest_nice : int;
   }
 
-  type coreinfo = {
-    number : int;
-    info : cpuinfo;
+ type t = {
+    main  : cpuinfo;
+    cores : cpuinfo list;
   }
 
   let line_to_cpuinfo line =
     let pattern =
-      "^cpu +\\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\)"  in
+      "^cpu\\([0-9]+\\)* +\\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\)"  in
     let reg = Str.regexp pattern in
     match Str.string_match reg line 0 with
     | false -> None
     | true ->
-      Some {
-        user = Str.matched_group 1 line |> int_of_string;
-        nice = Str.matched_group 2 line |> int_of_string;
-        system = Str.matched_group 3 line |> int_of_string;
-        idle = Str.matched_group 4 line |> int_of_string;
-        iowait = Str.matched_group 5 line |> int_of_string;
-        irq = Str.matched_group 6 line |> int_of_string;
-        softirq = Str.matched_group 7 line |> int_of_string;
-        steal = Str.matched_group 8 line |> int_of_string;
-        guest = Str.matched_group 9 line |> int_of_string;
-        guest_nice = Str.matched_group 10 line |> int_of_string;
-      }
-
-  let line_to_coreinfo line =
-    let pattern =
-      "^cpu\\([0-9]+\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\) \\(.*\\)"  in
-    let reg = Str.regexp pattern in
-    match Str.string_match reg line 0 with
-    | false -> None
-    | true ->
-      let core = {
+      Some  {
         user = Str.matched_group 2 line |> int_of_string;
         nice = Str.matched_group 3 line |> int_of_string;
         system = Str.matched_group 4 line |> int_of_string;
@@ -59,34 +39,29 @@ module Cpu = struct
         steal = Str.matched_group 9 line |> int_of_string;
         guest = Str.matched_group 10 line |> int_of_string;
         guest_nice = Str.matched_group 11 line |> int_of_string;
-      } in
-      Some {
-        number = Str.matched_group 1 line |> int_of_string;
-        info = core;
       }
 
-  type t = {
-    main : cpuinfo option;
-    cores : coreinfo list;
-  }
-
-  let parse_stat_file filename =
+  let parse_cpuinfo_file filename =
     Utils.read_lines filename
     >>= fun lines ->
-    let rec fetch_data cpu = function
-      | [] -> Lwt.return cpu
+    let rec fetch_data (cpu, cores) = function
+      | [] -> (cpu, cores)
       | line :: rest ->
-        match line_to_cpuinfo line with
-        | Some cpuinfo ->
-          fetch_data {cpu with main = Some cpuinfo} rest
-        | None ->
-          match line_to_coreinfo line with
-          | Some coreinfo ->
-            fetch_data {cpu with cores = (coreinfo :: cpu.cores)} rest
-          | None ->
-            fetch_data cpu rest
+        match cpu with
+        | None -> begin match line_to_cpuinfo line with
+          | Some cpuinfo -> fetch_data (Some cpuinfo, cores) rest
+          | None -> (cpu, cores)
+          end
+        | Some _ ->
+            match line_to_cpuinfo line with
+          | Some cpuinfo ->
+            fetch_data (cpu, cpuinfo :: cores) rest
+          | None -> (cpu, cores)
     in
-    fetch_data {main=None; cores = []} lines
+    let (main_opt, cores) = fetch_data (None, []) lines in
+    match main_opt with
+    | None -> Lwt.return_error "No Cpu information found"
+    | Some main -> Lwt.return_ok {main; cores}
 
   (* let usage cpu =
       PrevIdle = previdle + previowait
@@ -104,4 +79,31 @@ module Cpu = struct
 
       CPU_Percentage = (totald - idled)/totald
   *)
+  let usage cpuinfo =
+    let non_idle = cpuinfo.user +
+                   cpuinfo.nice +
+                   cpuinfo.system +
+                   cpuinfo.irq +
+                   cpuinfo.softirq +
+                   cpuinfo.steal in
+    let idle = cpuinfo.idle + cpuinfo.iowait in
+    let total = idle + non_idle in
+    (float_of_int non_idle) /. float_of_int total
+
+  type stats = {
+    overall : float;
+    cores: float list;
+  }
+
+  let stats cpu =
+    let u = cpu.main in
+    let overall = usage u in
+    let rec cores_usage acc = function
+      | [] -> List.rev acc
+      | c :: cs -> cores_usage ((usage c) :: acc) cs
+    in
+
+    { overall = overall;
+      cores = cores_usage [] cpu.cores;
+    }
 end
