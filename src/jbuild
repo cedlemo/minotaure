@@ -3,6 +3,6 @@
 (executable
  ((name minotaure)
   (public_name minotaure)
-  (libraries (cmdliner lwt notty notty.lwt))
+  (libraries (cmdliner lwt notty notty.lwt minotaure_lib))
   )
 )
