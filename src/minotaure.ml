@@ -32,6 +32,23 @@ let size_box cols rows =
   let left_margin = (cols - I.width box) / 2 in
   I.pad ~t:top_margin ~l:left_margin box
 
+let cpu_box cols rows =
+  let open Minotaure_lib.System_info in
+  Cpu.parse_stat_file ()
+  >>= fun result ->
+    let message = match result with
+    | Error message -> message
+    | Ok cpu ->
+      let stats = Cpu.stats cpu in
+      let nb_core = List.length cpu.cores in
+      let perc = string_of_float stats.overall  in
+      Printf.sprintf "Nb Cores: %d - Usage: %s" nb_core perc
+  in
+  let box = I.string A.(fg lightgreen ++ bg lightblack) message in
+  let top_margin = (rows - I.height box) / 2 in
+  let left_margin = (cols - I.width box) / 2 in
+  Lwt.return (I.pad ~t:top_margin ~l:left_margin box)
+
 let timer = function
   | None   -> Lwt.wait () |> fst
   | Some t -> Lwt_unix.sleep t >|= fun _ -> `Timer
@@ -50,7 +67,8 @@ let term_lwt_timed ?delay ~f =
     | #Unescape.event as evt -> invoke (event term, t) dim evt
     | `Timer as evt          -> invoke (e, timer delay) dim evt
   and invoke es dim e =
-    match f dim e with
+    f dim e
+    >>= function
     | `Continue      -> loop es dim
     | `Redraw img -> T.image term img >>= fun () -> loop es dim
     | `Stop          -> Lwt.return_unit in
@@ -59,9 +77,10 @@ let term_lwt_timed ?delay ~f =
 
 let f (w,h as dim) = function
     | `Resize _| `Timer ->
-        let message = size_box w h in
-        `Redraw (I.((outline_dim A.(fg lightred ) dim) </> message ))
-    | _ -> `Continue
+        cpu_box w h
+        >>= fun box ->
+        Lwt.return (`Redraw (I.((outline_dim A.(fg lightred ) dim) </> box )))
+    | _ -> Lwt.return `Continue
 
 let () =
   Lwt_main.run @@ term_lwt_timed ~delay:1.0 ~f
